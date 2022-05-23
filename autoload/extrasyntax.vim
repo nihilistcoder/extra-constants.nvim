@@ -1,52 +1,24 @@
-" call script update-syntax-files.sh
-function! extrasyntax#update(rootdir_or_file)
-    if (get(g:, "extrasyntax_init_called", 0) == 0)
-        return
-    endif
-
-    let script_path=g:extrasyntax_path . "/../update-syntax-files.sh"
-    let after_syntax_c=g:extrasyntax_path . "/../after/syntax/c"
-    call system([script_path, after_syntax_c, g:extrasyntax_data_dir, a:rootdir_or_file])
-endfunction
-
-" call script create-syntax-output-name.sh
-function! extrasyntax#output_name(file)
-    if (get(g:, "extrasyntax_init_called", 0) == 0)
-        return
-    endif
-
-    let script_path=g:extrasyntax_path . "/../create-output-name.sh"
-    let after_syntax_c=g:extrasyntax_path . "/../after/syntax/c/"
-    return after_syntax_c . system([script_path, a:file])
-endfunction
+let s:pluginpath=fnamemodify(resolve(expand('<sfile>:h')), ':h')
+let s:scriptpath=s:pluginpath . "/scripts/extrasyntax.sh"
+let s:datapath=stdpath('cache') . "/extrasyntax"
+" this will be the file that will determine the root of your project
+" Set this to a file that will always be in the root of your projects
+let s:anchor=get(g:, "extrasyntax_anchor_file", "CMakeLists.txt")
+let s:project_root=getcwd()
+let s:project_datapath=s:datapath
 
 function! extrasyntax#set_project_root_dir(dir)
-    if (get(g:, "extrasyntax_init_called", 0) == 0)
-        return
-    endif
-
-    if (a:dir == "")
-        return
-    endif
-
-    let g:extrasyntax_found_project_root=1
-
-    let g:extrasyntax_project_rootdir=a:dir
+    let s:project_root=a:dir
 
     " let the project name be the full directory path
     " use join() + split() to remove the / at the beggining
-    let project_name=join(split(a:dir, "/"), ".")
 
-    let g:extrasyntax_current_project_dir=g:extrasyntax_data_dir . "/" . project_name
+    let s:project_datapath=s:datapath . "/" . join(split(a:dir, "/"), ".")
 endfunction
 
-" finds the root directory by traversing the path up until we
-" find a CMakeLists.txt (or other) file, since we know there will be one there
+" finds the root directory by traversing the path up until we find a
+" CMakeLists.txt (or other) file, since we know there will be one there
 function! extrasyntax#find_project_root_dir()
-    if (get(g:, "extrasyntax_init_called", 0) == 0)
-        return
-    endif
-
     " shell current directory
     let current_dir=getcwd()
 
@@ -60,73 +32,98 @@ function! extrasyntax#find_project_root_dir()
         let searchdir_arr+=[path]
         let searchdir=join(searchdir_arr, "/")
 
-        if filereadable(searchdir."/".g:extrasyntax_anchor_file)
-            let found=searchdir
+        if filereadable(searchdir."/".s:anchor)
+            call extrasyntax#set_project_root_dir(searchdir)
             break
         endif
     endfor
-
-    call extrasyntax#set_project_root_dir(get(l:, "found", ""))
-endfunction
-
-" reload the specified syntax file
-function! extrasyntax#reload(path)
-    if (get(g:, "extrasyntax_init_called", 0) == 0)
-        return
-    endif
-
-    let output_name=extrasyntax#output_name(a:path)
-    if filereadable(output_name)
-        call execute("source " . output_name)
-    endif
-endfunction
-
-" Reload ALL syntax files
-function! extrasyntax#reload_all()
-    if (get(g:, "extrasyntax_init_called", 0) == 0)
-        return
-    endif
-
-    let files=split(expand(g:extrasyntax_path . "/../after/syntax/c/*.vim"))
-
-    for file in files
-        call execute("source " . file)
-    endfor
-endfunction
-
-function! extrasyntax#reload_current_file()
-    if (get(g:, "extrasyntax_init_called", 0) == 0)
-        return
-    endif
-
-    let current_file=expand("%:p")
-    call extrasyntax#update(current_file)
-    call extrasyntax#reload(current_file)
-endfunction
-
-function! extrasyntax#load_project_if_new()
-    let project_name=join(split(g:extrasyntax_project_rootdir, "/")[2:-1], ".")
-
-    let glob_pattern=g:extrasyntax_path . "/../after/syntax/c/" . project_name . ".*.vim"
-    if glob(glob_pattern) == ""
-        call extrasyntax#update(g:extrasyntax_project_rootdir)
-        call extrasyntax#reload_all()
-    endif
 
 endfunction
 
 " Setup the plugin
 function! extrasyntax#init()
-    let g:extrasyntax_init_called=1
-    " this will be the file that will determine the root of your project
-    " Set this to a file that will always be in the root of your projects
-    if get(g:, "extrasyntax_anchor_file", "") == 0
-        let g:extrasyntax_anchor_file="CMakeLists.txt"
-    endif
-
-    " TODO the directory where the plugin data will be stored
-    let g:extrasyntax_data_dir=stdpath('cache') . "/extrasyntax"
-
     call extrasyntax#find_project_root_dir()
 endfunction
 
+"
+" functions from the bash script
+"
+function! extrasyntax#find_constants(file)
+    return system([s:scriptpath, "find_constants", a:file])
+endfunction
+
+function! extrasyntax#find_enums(file)
+    return system([s:scriptpath, "find_enums", a:file])
+endfunction
+
+function! extrasyntax#find_all_files_from_project(dir = s:project_root)
+    return system([s:scriptpath, "find_all_files_from_project", a:dir])
+endfunction
+
+"
+" cache manipulation functions
+"
+
+function! extrasyntax#loadsyntax(path)
+    if filereadable(a:path)
+        call execute("source " . a:path)
+    endif
+endfunction
+
+
+function! extrasyntax#add_new_constants(constants, outputfile)
+    let lines=[]
+    for constant in a:constants
+        let lines+=["syn keyword cConstant ". constant]
+    endfor
+
+    call writefile(lines, a:outputfile, "a")
+    call extrasyntax#loadsyntax(a:outputfile)
+endfunction
+
+function! extrasyntax#current_file_syntax_path()
+    return s:project_datapath . "/" . join(split(expand("%:p"), "/"), ".") . ".vim"
+endfunction
+
+function! extrasyntax#has_constant(constant, file)
+    return !empty(system(["grep", a:file, "-e", "'\<".a:constant."'\>"]))
+endfunction
+
+function! extrasyntax#load_file_constants(file)
+    let outputfile=s:project_datapath . "/" . join(split(a:file, "/"), ".") . ".vim"
+
+    if (!filereadable(outputfile))
+        call system(["touch", outputfile])
+    endif
+
+    let constants=split(extrasyntax#find_constants(a:file))+split(extrasyntax#find_enums(a:file))
+    let new_constants=[]
+    for constant in constants
+        if (!extrasyntax#has_constant(constant, outputfile))
+            let new_constants+=[constant]
+        endif
+    endfor
+
+    if (!empty(new_constants))
+        call extrasyntax#add_new_constants(new_constants, outputfile)
+    endif
+endfunction
+
+function! extrasyntax#loadall_from_project()
+    if (!isdirectory(s:project_datapath))
+        call mkdir(s:project_datapath, "p")
+    endif
+
+    let files=split(glob(s:project_datapath . "/*.vim"))
+
+    if (empty(files))
+        let sources=split(extrasyntax#find_all_files_from_project())
+        for src in sources
+            call extrasyntax#load_file_constants(src)
+        endfor
+    else
+        for file in files
+            call extrasyntax#loadsyntax(file)
+        endfor
+    endif
+endfunction
