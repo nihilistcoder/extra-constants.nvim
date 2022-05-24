@@ -1,14 +1,18 @@
 #!/bin/bash
 
-SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-$0}"; )" &> /dev/null && pwd 2> /dev/null; )"
+FIND=$(which find)
+MKDIR=$(which mkdir)
+DIRNAME=$(which dirname)
+
+SCRIPT_DIR="$( cd -- "$(${DIRNAME} -- "${BASH_SOURCE[0]:-$0}";)" &> /dev/null && pwd 2> /dev/null; )"
 
 syntax_dir="${SCRIPT_DIR}/../after/syntax/c"
 
 if [[ ! -d ${syntax_dir} ]]; then
-    mkdir -p ${syntax_dir}
+    ${MKDIR} -p ${syntax_dir}
 fi
 
-files=$(find /usr/include \( -path *usr/include/asm-generic/* -o \
+files=$(${FIND} /usr/include \( -path *usr/include/asm-generic/* -o \
                           -path *usr/include/asm/* -o \
                           -path *usr/include/bits/* -o \
                           -path *usr/include/sys/* \
@@ -31,5 +35,8 @@ for file in ${files}; do
     outpufile=${syntax_dir}/$(echo -n "${file}" | tr "/" "." | sed 's/^\.//').vim
     for constant in ${constants}; do
         echo "syn keyword cConstant ${constant}" >> ${outpufile}
+    done
+    for enum in ${enums}; do
+        echo "syn keyword cConstant ${enum}" >> ${outpufile}
     done
 done
