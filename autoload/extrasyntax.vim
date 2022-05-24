@@ -115,15 +115,19 @@ function! extrasyntax#loadall_from_project()
     endif
 
     let files=split(glob(s:project_datapath . "/*.vim"))
-
-    if (empty(files))
-        let sources=split(extrasyntax#find_all_files_from_project())
-        for src in sources
-            call extrasyntax#load_file_constants(src)
-        endfor
-    else
+    if (!empty(files))
         for file in files
             call extrasyntax#loadsyntax(file)
         endfor
     endif
+
+    let sources=split(extrasyntax#find_all_files_from_project())
+
+    " search for any files that we do not have
+    for src in sources
+        let outputfile=s:project_datapath . "/" . join(split(src, "/"), ".") . ".vim"
+        if (count(files, outputfile) == 0)
+            call extrasyntax#load_file_constants(src)
+        endif
+    endfor
 endfunction
