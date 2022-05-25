@@ -3,6 +3,7 @@
 FIND=$(which find)
 MKDIR=$(which mkdir)
 DIRNAME=$(which dirname)
+GREP=$(which grep)
 
 SCRIPT_DIR="$( cd -- "$(${DIRNAME} -- "${BASH_SOURCE[0]:-$0}";)" &> /dev/null && pwd 2> /dev/null; )"
 
@@ -34,9 +35,15 @@ for file in ${files}; do
 
     outpufile=${syntax_dir}/$(echo -n "${file}" | tr "/" "." | sed 's/^\.//').vim
     for constant in ${constants}; do
-        echo "syn keyword cConstant ${constant}" >> ${outpufile}
+        already_in_c_vim=$(${GREP} /usr/share/nvim/runtime/syntax/c.vim -e ${constant})
+        if [[ ${already_in_c_vim} == "" ]]; then
+            echo "syn keyword cConstant ${constant}" >> ${outpufile}
+        fi
     done
     for enum in ${enums}; do
-        echo "syn keyword cConstant ${enum}" >> ${outpufile}
+        already_in_c_vim=$(${GREP} /usr/share/nvim/runtime/syntax/c.vim -e ${enum})
+        if [[ ${already_in_c_vim} == "" ]]; then
+            echo "syn keyword cConstant ${enum}" >> ${outpufile}
+        fi
     done
 done
