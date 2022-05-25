@@ -1,5 +1,4 @@
 let s:pluginpath=fnamemodify(resolve(expand('<sfile>:h')), ':h')
-let s:scriptpath=s:pluginpath . "/scripts/extrasyntax.sh"
 let s:datapath=stdpath('cache') . "/extrasyntax"
 let s:blacklistdir=s:datapath."/blacklist"
 let s:whitelistdir=s:datapath."/whitelist"
@@ -10,17 +9,22 @@ let s:project=""
 let s:project_root=getcwd()
 let s:project_datapath=s:datapath
 let s:project_internal_name=""
+let s:buffers=[]
 
-function! extrasyntax#this_file_internal_name(file="%:p")
-    return join(split(expand(a:file), "/"), ".")
+function! extrasyntax#add_current_buffer()
+    let buf=bufnr("%")
+    if (index(s:buffers, buf) == -1)
+        let s:buffers+=[buf]
+    endif
 endfunction
 
-function! extrasyntax#current_file_syntax_path()
-    return s:project_datapath . "/" . extrasyntax#this_file_internal_name() . ".vim"
-endfunction
-
-function! extrasyntax#has_constant(constant, file)
-    return !empty(system(["grep", a:file, "-e", "syn keyword cConstant ".a:constant.""]))
+function! extrasyntax#remove_current_buffer()
+    echo "here"
+    let buf=bufnr("%")
+    let ndx=index(s:buffers, buf)
+    if (ndx == -1)
+        call remove(s:buffers, ndx)
+    endif
 endfunction
 
 function! extrasyntax#set_project_root_dir(dir)
@@ -32,32 +36,6 @@ function! extrasyntax#set_project_root_dir(dir)
     let s:project_internal_name=join(split(a:dir, "/"), ".")
     let s:project_datapath=s:datapath . "/" . s:project_internal_name
     let s:project=fnamemodify(s:project_root, ":t")
-endfunction
-
-" finds the root directory by traversing the path up until we find a
-" CMakeLists.txt (or other) file, since we know there will be one there
-function! extrasyntax#find_project_root_dir()
-    " shell current directory
-    let current_dir=getcwd()
-
-    " we know our path will have at least /home/USER and never be at the
-    " home directory itself (unless you are really crazy), so we skip anything
-    " before that and we start at the next directory
-    let dirs=split(current_dir, "/")[2:-1]
-    let searchdir_arr=[getenv("HOME")]
-
-    for path in dirs
-        let searchdir_arr+=[path]
-        let searchdir=join(searchdir_arr, "/")
-
-        for anchor in s:anchors
-            if filereadable(searchdir."/".anchor)
-                call extrasyntax#set_project_root_dir(searchdir)
-                break
-            endif
-        endfor
-    endfor
-
 endfunction
 
 " Setup the plugin
@@ -74,29 +52,19 @@ function! extrasyntax#init()
         call mkdir(s:whitelistdir, "p")
     endif
 
-    call extrasyntax#find_project_root_dir()
-endfunction
-
-"
-" functions from the bash script
-"
-function! extrasyntax#find_constants(file)
-    return system([s:scriptpath, "find_constants", a:file])
-endfunction
-
-function! extrasyntax#find_enums(file)
-    return system([s:scriptpath, "find_enums", a:file])
-endfunction
-
-function! extrasyntax#find_all_files_from_project(dir = s:project_root)
-    return system([s:scriptpath, "find_all_files_from_project", a:dir])
+    call extrasyntax#set_project_root_dir(extrasyntax#utils#find_project_root_dir(s:anchors))
 endfunction
 
 " source the given syntax file
 function! extrasyntax#loadsyntax(path)
-    if filereadable(a:path)
-        call execute("source " . a:path)
+    if (!filereadable(a:path))
+        return
     endif
+
+    for buf in s:buffers
+        let winid=bufwinid(buf)
+        call win_execute(winid, "source " . a:path)
+    endfor
 endfunction
 
 function! extrasyntax#add_new_constants(constants, outputfile)
@@ -110,16 +78,17 @@ function! extrasyntax#add_new_constants(constants, outputfile)
 endfunction
 
 function! extrasyntax#load_file_constants(file)
-    let outputfile=s:project_datapath . "/" . extrasyntax#this_file_internal_name(a:file) . ".vim"
+    let outputfile=s:project_datapath . "/" . extrasyntax#utils#this_file_internal_name(a:file) . ".vim"
 
     if (!filereadable(outputfile))
         call system(["touch", outputfile])
     endif
 
-    let constants=split(extrasyntax#find_constants(a:file))+split(extrasyntax#find_enums(a:file))
+    let constants=split(extrasyntax#scripts#find_constants(a:file))
+    let constants+=split(extrasyntax#scripts#find_enums(a:file))
     let new_constants=[]
     for constant in constants
-        if (!extrasyntax#has_constant(constant, outputfile))
+        if (!extrasyntax#utils#has_constant(constant, outputfile))
             let new_constants+=[constant]
         endif
     endfor
@@ -159,7 +128,7 @@ function! extrasyntax#loadall_from_project()
         endfor
     endif
 
-    let sources=split(extrasyntax#find_all_files_from_project())
+    let sources=split(extrasyntax#scripts#find_all_files_from_project())
 
     " search for any files that we do not have
     for src in sources
