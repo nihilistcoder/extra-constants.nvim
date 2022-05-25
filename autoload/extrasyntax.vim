@@ -30,7 +30,7 @@ function! extrasyntax#set_project_root_dir(dir)
     " use join() + split() to remove the / at the beggining
 
     let s:project_internal_name=join(split(a:dir, "/"), ".")
-    let s:project_datapath=s:datapath . s:project_internal_name
+    let s:project_datapath=s:datapath . "/" . s:project_internal_name
     let s:project=fnamemodify(s:project_root, ":t")
 endfunction
 
