@@ -20,7 +20,7 @@ function! extrasyntax#current_file_syntax_path()
 endfunction
 
 function! extrasyntax#has_constant(constant, file)
-    return !empty(system(["grep", a:file, "-e", "'\<".a:constant."'\>"]))
+    return !empty(system(["grep", a:file, "-e", "'syn keyword cConstant ".a:constant."'"]))
 endfunction
 
 function! extrasyntax#set_project_root_dir(dir)
@@ -126,6 +126,8 @@ function! extrasyntax#load_file_constants(file)
 
     if (!empty(new_constants))
         call extrasyntax#add_new_constants(new_constants, outputfile)
+    else
+        call extrasyntax#loadsyntax(outputfile)
     endif
 endfunction
 
