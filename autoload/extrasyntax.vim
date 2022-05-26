@@ -19,7 +19,6 @@ function! extrasyntax#add_current_buffer()
 endfunction
 
 function! extrasyntax#remove_current_buffer()
-    echo "here"
     let buf=bufnr("%")
     let ndx=index(s:buffers, buf)
     if (ndx == -1)
