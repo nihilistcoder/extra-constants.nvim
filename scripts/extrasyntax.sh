@@ -17,8 +17,8 @@ function find_enums () {
     [[ -z "${1}" || ! -f "${1}" || ! -r "${1}" ]] && echo "" && return 1
 
     ${SED} 's/\/\/.*$//' ${1} | ${TR} "\n" " " | ${PERL} -pe 's/\/\*.*?\*\///g' |\
-        ${GREP} -E -e 'enum\s*{(\s*\w*\s*=?\s*\w*\s*,?)+}' --only-matching |\
-        ${SED} -E 's/(\s*=\s*\w*,?|,|enum\s*\{\s*|\s*\})//g' | ${SED} -z -E 's/\s+/\n/g'
+        ${GREP} -E -e 'enum\s*\w*\s*{(\s*\w*\s*=?\s*\w*\s*,?)+}' --only-matching |\
+        ${SED} -E 's/(\s*=\s*\w*,?|,|enum\s*\w*\s*\{\s*|\s*\})//g' | ${SED} -z -E 's/\s+/\n/g'
 
     return 0
 }
