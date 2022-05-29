@@ -1,3 +1,5 @@
+" vim:foldmethod=marker:foldlevel=0
+
 let s:pluginpath=fnamemodify(resolve(expand('<sfile>:h')), ':h')
 let s:datapath=stdpath('cache') . "/extrasyntax"
 let s:blacklistdir=s:datapath."/blacklist"
@@ -11,12 +13,17 @@ let s:project_datapath=s:datapath
 let s:project_internal_name=""
 let s:buffers=[]
 
+" add_current_buffer {{{
 function! extrasyntax#add_current_buffer()
     let buf=bufnr("%")
     if (index(s:buffers, buf) == -1)
         let s:buffers+=[buf]
     endif
 endfunction
+
+" }}}
+
+" remove_current_buffer {{{
 
 function! extrasyntax#remove_current_buffer()
     let buf=bufnr("%")
@@ -25,6 +32,10 @@ function! extrasyntax#remove_current_buffer()
         call remove(s:buffers, ndx)
     endif
 endfunction
+
+"}}}
+
+" set_project_root_dir {{{
 
 function! extrasyntax#set_project_root_dir(dir)
     let s:project_root=a:dir
@@ -37,7 +48,10 @@ function! extrasyntax#set_project_root_dir(dir)
     let s:project=fnamemodify(s:project_root, ":t")
 endfunction
 
-" Setup the plugin
+" }}}
+
+" init {{{
+
 function! extrasyntax#init()
     if (!isdirectory(s:datapath))
         call mkdir(s:datapath, "p")
@@ -54,7 +68,10 @@ function! extrasyntax#init()
     call extrasyntax#set_project_root_dir(extrasyntax#utils#find_project_root_dir(s:anchors))
 endfunction
 
-" source the given syntax file
+" }}}
+
+" loadsyntax {{{
+
 function! extrasyntax#loadsyntax(path)
     if (!filereadable(a:path))
         return
@@ -66,6 +83,10 @@ function! extrasyntax#loadsyntax(path)
     endfor
 endfunction
 
+" }}}
+
+" add_new_constants {{{
+
 function! extrasyntax#add_new_constants(constants, outputfile)
     let lines=[]
     for constant in a:constants
@@ -75,6 +96,10 @@ function! extrasyntax#add_new_constants(constants, outputfile)
     call writefile(lines, a:outputfile, "a")
     call extrasyntax#loadsyntax(a:outputfile)
 endfunction
+
+" }}}
+
+" load_file_constants {{{
 
 function! extrasyntax#load_file_constants(file)
     let outputfile=s:project_datapath . "/" . extrasyntax#utils#this_file_internal_name(a:file) . ".vim"
@@ -99,6 +124,9 @@ function! extrasyntax#load_file_constants(file)
     endif
 endfunction
 
+" }}}
+
+" loadall_from_project {{{
 function! extrasyntax#loadall_from_project()
     " search the project in the blacklist directory
     " if we find it, then we don't load anything
@@ -137,3 +165,5 @@ function! extrasyntax#loadall_from_project()
         endif
     endfor
 endfunction
+
+" }}}

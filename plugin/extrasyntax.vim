@@ -1,5 +1,8 @@
 augroup extrasyntax
     au!
+    au VimEnter *.c,*.h ++once call extrasyntax#init()
+    au UIEnter *.c,*.h ++once call extrasyntax#loadall_from_project()
+    au VimEnter *.c,*.h ++once call extrasyntax#scripts#regenerate_predefs()
 augroup END
 
 function! ExtraSyntaxLoadFromHeaders(dir)
