@@ -1,7 +1,7 @@
 " vim:foldmethod=marker:foldlevel=0
 
 let s:pluginpath=fnamemodify(resolve(expand('<sfile>:h')), ':h')
-let s:datapath=stdpath('cache') . "extra-constants"
+let s:datapath=stdpath('cache') . "/extra-constants"
 let s:blacklistdir=s:datapath."/blacklist"
 let s:whitelistdir=s:datapath."/whitelist"
 " this will be the file that will determine the root of your project
