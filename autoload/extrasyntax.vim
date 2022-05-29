@@ -72,11 +72,12 @@ function! extrasyntax#init()
     endif
 
     let root_dir=extrasyntax#utils#find_project_root_dir(s:anchors)
+    let s:project_internal_name=join(split(root_dir[1], "/"), ".")
+
     if (root_dir[0] == 1)
         call extrasyntax#set_project_root_dir(root_dir[1])
     endif
 
-    let s:project_internal_name=join(split(root_dir[1], "/"), ".")
     let s:project=fnamemodify(s:project_root, ":t")
 endfunction
 
