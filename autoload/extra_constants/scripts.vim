@@ -6,12 +6,12 @@
 
 let s:pluginpath=fnamemodify(fnamemodify(resolve(expand('<sfile>:h')), ':h'), ':h')
 let s:scriptdir=s:pluginpath."/scripts"
-let s:scriptpath=s:pluginpath . "/scripts/extrasyntax.sh"
-let s:cachedir=stdpath("cache")."/extrasyntax"
+let s:scriptpath=s:pluginpath . "/scripts/functions.sh"
+let s:cachedir=stdpath("cache")."/extra-constants"
 
 " find_constants {{{
 
-function! extrasyntax#scripts#find_constants(file)
+function! extra_constants#scripts#find_constants(file)
     return system([s:scriptpath, "find_constants", a:file, s:cachedir])
 endfunction
 
@@ -19,7 +19,7 @@ endfunction
 
 " find_enums {{{
 
-function! extrasyntax#scripts#find_enums(file)
+function! extra_constants#scripts#find_enums(file)
     return system([s:scriptpath, "find_enums", a:file])
 endfunction
 
@@ -27,7 +27,7 @@ endfunction
 
 " find_all_files_from_project {{{
 
-function! extrasyntax#scripts#find_all_files_from_project(dir = s:project_root)
+function! extra_constants#scripts#find_all_files_from_project(dir = s:project_root)
     return system([s:scriptpath, "find_all_files_from_project", a:dir])
 endfunction
 
@@ -35,7 +35,7 @@ endfunction
 
 " regenerate_predefs {{{
 
-function! extrasyntax#scripts#regenerate_predefs()
+function! extra_constants#scripts#regenerate_predefs()
     let cmd=[s:scriptdir."/regenerate_predefs.sh", s:cachedir]
     let opts={"detach":1}
     call chanclose(jobstart(cmd, opts))

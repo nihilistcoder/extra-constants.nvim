@@ -5,7 +5,7 @@ MKDIR=$(which mkdir)
 GREP=$(which grep)
 
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-$0}"; )" &> /dev/null && pwd 2> /dev/null; )"
-CACHE_DIR="${HOME}/.cache/nvim/extrasyntax"
+CACHE_DIR="${HOME}/.cache/nvim/extra-constants"
 SYNTAX_DIR="${SCRIPT_DIR}/../after/syntax/c"
 
 if [[ ! -d ${SYNTAX_DIR} ]]; then
@@ -22,8 +22,8 @@ HEADERS=$(${FIND} ${GCC_INCLUDE_DIR} -name *.h)
 CONSTANTS_ALL_FILE=$(mktemp)
 
 for file in ${HEADERS}; do
-    ${SCRIPT_DIR}/extrasyntax.sh find_constants ${file} ${CACHE_DIR} >> ${CONSTANTS_ALL_FILE}
-    ${SCRIPT_DIR}/extrasyntax.sh find_enums ${file} ${HOME} >> ${CONSTANTS_ALL_FILE}
+    ${SCRIPT_DIR}/functions.sh find_constants ${file} ${CACHE_DIR} >> ${CONSTANTS_ALL_FILE}
+    ${SCRIPT_DIR}/functions.sh find_enums ${file} ${HOME} >> ${CONSTANTS_ALL_FILE}
 done
 
 CONSTANTS=$(sort ${CONSTANTS_ALL_FILE} | uniq)
