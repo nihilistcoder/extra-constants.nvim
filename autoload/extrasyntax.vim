@@ -72,7 +72,8 @@ function! extrasyntax#init()
     endif
 
     let root_dir=extrasyntax#utils#find_project_root_dir(s:anchors)
-    let s:project_internal_name=join(split(root_dir[1], "/"), ".")
+    let s:project_internal_name=extrasyntax#utils#this_file_internal_name(root_dir[1])
+    echo s:project_internal_name
 
     if (root_dir[0] == 1)
         call extrasyntax#set_project_root_dir(root_dir[1])
@@ -101,6 +102,10 @@ endfunction
 " load_file_constants {{{
 
 function! extrasyntax#load_file_constants(file)
+    if (filereadable(s:blacklistdir."/".s:project_internal_name))
+        return
+    endif
+
     let outputfile=extrasyntax#file_output_name(a:file)
 
     let constants=split(extrasyntax#scripts#find_constants(a:file))
