@@ -13,6 +13,14 @@ let s:project_datapath=s:datapath
 let s:project_internal_name=""
 let s:buffers=[]
 
+" file_output_name {{{
+
+function! extrasyntax#file_output_name(file)
+    return s:project_datapath . "/" . extrasyntax#utils#this_file_internal_name(a:file) . ".vim"
+endfunction
+
+" }}}
+
 " add_current_buffer {{{
 function! extrasyntax#add_current_buffer()
     let buf=bufnr("%")
@@ -43,9 +51,7 @@ function! extrasyntax#set_project_root_dir(dir)
     " let the project name be the full directory path
     " use join() + split() to remove the / at the beggining
 
-    let s:project_internal_name=join(split(a:dir, "/"), ".")
     let s:project_datapath=s:datapath . "/" . s:project_internal_name
-    let s:project=fnamemodify(s:project_root, ":t")
 endfunction
 
 " }}}
@@ -65,7 +71,13 @@ function! extrasyntax#init()
         call mkdir(s:whitelistdir, "p")
     endif
 
-    call extrasyntax#set_project_root_dir(extrasyntax#utils#find_project_root_dir(s:anchors))
+    let root_dir=extrasyntax#utils#find_project_root_dir(s:anchors)
+    if (root_dir[0] == 1)
+        call extrasyntax#set_project_root_dir(root_dir[1])
+    endif
+
+    let s:project_internal_name=join(split(root_dir[1], "/"), ".")
+    let s:project=fnamemodify(s:project_root, ":t")
 endfunction
 
 " }}}
@@ -85,41 +97,26 @@ endfunction
 
 " }}}
 
-" add_new_constants {{{
-
-function! extrasyntax#add_new_constants(constants, outputfile)
-    let lines=[]
-    for constant in a:constants
-        let lines+=["syn keyword cConstant ". constant]
-    endfor
-
-    call writefile(lines, a:outputfile, "a")
-    call extrasyntax#loadsyntax(a:outputfile)
-endfunction
-
-" }}}
-
 " load_file_constants {{{
 
 function! extrasyntax#load_file_constants(file)
-    let outputfile=s:project_datapath . "/" . extrasyntax#utils#this_file_internal_name(a:file) . ".vim"
-
-    if (!filereadable(outputfile))
-        call system(["touch", outputfile])
-    endif
+    let outputfile=extrasyntax#file_output_name(a:file)
 
     let constants=split(extrasyntax#scripts#find_constants(a:file))
     let constants+=split(extrasyntax#scripts#find_enums(a:file))
-    let new_constants=[]
-    for constant in constants
-        if (!extrasyntax#utils#has_constant(constant, outputfile))
-            let new_constants+=[constant]
-        endif
+    let constants=systemlist("uniq", system("sort -", constants))
+
+    for i in range(len(constants))
+        let constants[i] = "syn keyword cConstant " . constants[i]
     endfor
 
-    if (!empty(new_constants))
-        call extrasyntax#add_new_constants(new_constants, outputfile)
-    else
+    let tempfile=tempname()
+    call writefile(constants, tempfile)
+
+    let differ=system(["diff", "-q", "-N", tempfile, outputfile])
+
+    if (!empty(differ))
+        call writefile(constants, outputfile)
         call extrasyntax#loadsyntax(outputfile)
     endif
 endfunction
@@ -135,7 +132,9 @@ function! extrasyntax#loadall_from_project()
     endif
 
     if (!filereadable(s:whitelistdir."/".s:project_internal_name))
-        if (tolower(input("(Extra-Syntax) Load extra syntax for '".s:project."'? (Y/N) ")) == "n")
+        let choices="&Yes\n&No"
+        let msg="(Extra-Syntax) Load constants for '".s:project."'?"
+        if (confirm(msg, choices, 2, "Question") == 2)
             call system(["touch", s:blacklistdir."/".s:project_internal_name])
             return
         else

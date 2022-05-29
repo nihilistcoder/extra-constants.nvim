@@ -20,11 +20,11 @@ function! extrasyntax#utils#find_project_root_dir(anchors)
 
         for anchor in a:anchors
             if filereadable(searchdir."/".anchor)
-                return searchdir
+                return [1, searchdir]
             endif
         endfor
     endfor
-    return current_dir
+    return [0, current_dir]
 endfunction
 
 function! extrasyntax#utils#has_constant(constant, file)

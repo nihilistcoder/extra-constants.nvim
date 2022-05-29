@@ -7,11 +7,12 @@
 let s:pluginpath=fnamemodify(fnamemodify(resolve(expand('<sfile>:h')), ':h'), ':h')
 let s:scriptdir=s:pluginpath."/scripts"
 let s:scriptpath=s:pluginpath . "/scripts/extrasyntax.sh"
+let s:cachedir=stdpath("cache")."/extrasyntax"
 
 " find_constants {{{
 
 function! extrasyntax#scripts#find_constants(file)
-    return system([s:scriptpath, "find_constants", a:file])
+    return system([s:scriptpath, "find_constants", a:file, s:cachedir])
 endfunction
 
 " }}}
@@ -32,8 +33,12 @@ endfunction
 
 " }}}
 
+" regenerate_predefs {{{
+
 function! extrasyntax#scripts#regenerate_predefs()
-    let cmd=[s:scriptdir."/regenerate_predefs.sh", stdpath("cache")."/extrasyntax"]
+    let cmd=[s:scriptdir."/regenerate_predefs.sh", s:cachedir]
     let opts={"detach":1}
     call chanclose(jobstart(cmd, opts))
 endfunction
+
+"}}}

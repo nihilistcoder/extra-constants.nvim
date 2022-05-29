@@ -6,14 +6,17 @@ DIRNAME=$(which dirname)
 GREP=$(which grep)
 
 SCRIPT_DIR="$( cd -- "$(${DIRNAME} -- "${BASH_SOURCE[0]:-$0}";)" &> /dev/null && pwd 2> /dev/null; )"
+CACHE_DIR="${HOME}/.cache/nvim/extrasyntax"
+SYNTAX_DIR="${SCRIPT_DIR}/../after/syntax/c"
 
-syntax_dir="${SCRIPT_DIR}/../after/syntax/c"
-
-if [[ ! -d ${syntax_dir} ]]; then
-    ${MKDIR} -p ${syntax_dir}
+if [[ ! -d ${SYNTAX_DIR} ]]; then
+    ${MKDIR} -p ${SYNTAX_DIR}
 fi
 
-files=$(${FIND} /usr/include \( -path *usr/include/asm-generic/* -o \
+OUTPUT="${SYNTAX_DIR}/libc.vim"
+echo -n "" > ${OUTPUT} # truncate the file
+
+HEADERS=$(${FIND} /usr/include \( -path *usr/include/asm-generic/* -o \
                           -path *usr/include/asm/* -o \
                           -path *usr/include/bits/* -o \
                           -path *usr/include/sys/* \
@@ -29,21 +32,17 @@ files=$(${FIND} /usr/include \( -path *usr/include/asm-generic/* -o \
                           -name string.h -o -name tgmath.h -o -name threads.h -o \
                           -name time.h -o -name uchar.h -o -name wchar.h -o -name wctype.h \))
 
-for file in ${files}; do
-    constants=$(${SCRIPT_DIR}/extrasyntax.sh find_constants ${file})
-    enums=$(${SCRIPT_DIR}/extrasyntax.sh find_enums ${file})
+CONSTANTS_ALL_FILE=$(mktemp)
 
-    outpufile=${syntax_dir}/$(echo -n "${file}" | tr "/" "." | sed 's/^\.//').vim
-    for constant in ${constants}; do
-        already_in_c_vim=$(${GREP} /usr/share/nvim/runtime/syntax/c.vim -e ${constant})
-        if [[ ${already_in_c_vim} == "" ]]; then
-            echo "syn keyword cConstant ${constant}" >> ${outpufile}
-        fi
-    done
-    for enum in ${enums}; do
-        already_in_c_vim=$(${GREP} /usr/share/nvim/runtime/syntax/c.vim -e ${enum})
-        if [[ ${already_in_c_vim} == "" ]]; then
-            echo "syn keyword cConstant ${enum}" >> ${outpufile}
-        fi
-    done
+for file in ${HEADERS}; do
+    ${SCRIPT_DIR}/extrasyntax.sh find_constants ${file} ${CACHE_DIR} >> ${CONSTANTS_ALL_FILE}
+    ${SCRIPT_DIR}/extrasyntax.sh find_enums ${file} ${HOME} >> ${CONSTANTS_ALL_FILE}
 done
+
+CONSTANTS=$(sort ${CONSTANTS_ALL_FILE} | uniq)
+
+for c in ${CONSTANTS}; do
+    echo "syn keyword cConstant ${c}"  >> ${OUTPUT}
+done
+
+rm ${CONSTANTS_ALL_FILE}

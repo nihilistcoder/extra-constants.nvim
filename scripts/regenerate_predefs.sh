@@ -42,3 +42,6 @@ WINDOWS_TARGET="x86_64-pc-windows-gnu"
 regenerate_predefs ${PREDEFS_GNU} ${GCC}
 regenerate_predefs ${PREDEFS_CLANG} ${CLANG}
 regenerate_predefs ${PREDEFS_CLANG_MSVC} ${CLANG} ${WINDOWS_TARGET}
+
+# merge everything
+sort -u ${PREDEFS_GNU} ${PREDEFS_CLANG} ${PREDEFS_CLANG_MSVC} "${CACHE_DIR}/predefs.txt"
