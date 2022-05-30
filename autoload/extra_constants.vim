@@ -11,6 +11,7 @@ let s:project=""
 let s:project_root=getcwd()
 let s:project_datapath=s:datapath
 let s:project_internal_name=""
+let s:project_compile_commands=""
 let s:buffers=[]
 
 " file_output_name {{{
@@ -79,6 +80,10 @@ function! extra_constants#init()
     endif
 
     let s:project=fnamemodify(s:project_root, ":t")
+
+    if (filereadable(s:project_root."/compile_commands.json"))
+        let s:project_compile_commands=s:project_root."/compile_commands.json"
+    endif
 endfunction
 
 " }}}
@@ -107,7 +112,7 @@ function! extra_constants#load_file_constants(file)
 
     let outputfile=extra_constants#file_output_name(a:file)
 
-    let constants=split(extra_constants#scripts#find_constants(a:file))
+    let constants=split(extra_constants#scripts#find_constants(a:file, s:project_compile_commands))
     let constants+=split(extra_constants#scripts#find_enums(a:file))
     let constants=systemlist("sort -u -", constants)
 

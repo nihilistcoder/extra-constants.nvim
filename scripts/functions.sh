@@ -10,14 +10,21 @@ DIFF=$(which diff)
 function find_constants () {
     FILE=${1}
     CACHE_DIR=${2}
+    COMPILE_COMMANDS_FILE=${3}
 
     [[ -z "${FILE}" || ! -f "${FILE}" || ! -f "${CACHE_DIR}/predefs.txt" ]] && return 1
 
+    if [[ ! -z "${COMPILE_COMMANDS_FILE}" && -f "${COMPILE_COMMANDS_FILE}" ]]; then
+        INCLUDE_PATH=$(${GREP} ${COMPILE_COMMANDS_FILE} -E -e "-I[/[:alnum:]_-]+" --only-matching | sort -u)
+    fi
+
     TMPFILE=$(mktemp)
 
-    ${CPP} -dD -E -x c ${FILE} 2>/dev/null | ${GREP} "#define" | cut -d' ' -f2 | grep -v -E -e "\w+\(.*\)$" > ${TMPFILE}
+    ${CPP} ${INCLUDE_PATH} -dD -E -x c ${FILE} 2>/dev/null | ${GREP} "#define" | cut -d' ' -f2 | ${GREP} -v -E -e "\w+\(.*\)$" > ${TMPFILE}
 
-    grep ${TMPFILE} -v -f "${CACHE_DIR}/predefs.txt" | grep -v -f "${CACHE_DIR}/nvim_syntax.txt" | grep -v -E -e "(^_.*|_H(_INCLUDED)?$)"
+    ${GREP} ${TMPFILE} -v -f "${CACHE_DIR}/predefs.txt" | ${GREP} -v -f "${CACHE_DIR}/nvim_syntax.txt" | ${GREP} -v -E -e "(^_.*|_H(_INCLUDED)?$)"
+
+    cat ${TMPFILE}
 
     rm ${TMPFILE}
 

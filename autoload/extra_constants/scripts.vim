@@ -11,8 +11,8 @@ let s:cachedir=stdpath("cache")."/extra-constants"
 
 " find_constants {{{
 
-function! extra_constants#scripts#find_constants(file)
-    return system([s:scriptpath, "find_constants", a:file, s:cachedir])
+function! extra_constants#scripts#find_constants(file, compile_commands)
+    return system([s:scriptpath, "find_constants", a:file, s:cachedir, a:compile_commands])
 endfunction
 
 " }}}
