@@ -36,9 +36,15 @@ endfunction
 " regenerate_predefs {{{
 
 function! extra_constants#scripts#regenerate_predefs()
-    let cmd=[s:scriptdir."/regenerate_predefs.sh", s:cachedir]
-    let opts={"detach":1}
-    call chanclose(jobstart(cmd, opts))
+    call system([s:scriptdir."/regenerate_predefs.sh", s:cachedir])
+endfunction
+
+"}}}
+
+" regenerate_nvim_syntax {{{
+
+function! extra_constants#scripts#regenerate_nvim_syntax()
+    call system([s:scriptdir."/regenerate_nvim_syntax.sh", s:cachedir])
 endfunction
 
 "}}}

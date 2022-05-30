@@ -24,8 +24,6 @@ function find_constants () {
 
     ${GREP} ${TMPFILE} -v -f "${CACHE_DIR}/predefs.txt" | ${GREP} -v -f "${CACHE_DIR}/nvim_syntax.txt" | ${GREP} -v -E -e "(^_.*|_H(_INCLUDED)?$)"
 
-    cat ${TMPFILE}
-
     rm ${TMPFILE}
 
     return 0

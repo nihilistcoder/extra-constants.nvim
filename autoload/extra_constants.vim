@@ -4,6 +4,8 @@ let s:pluginpath=fnamemodify(resolve(expand('<sfile>:h')), ':h')
 let s:datapath=stdpath('cache') . "/extra-constants"
 let s:blacklistdir=s:datapath."/blacklist"
 let s:whitelistdir=s:datapath."/whitelist"
+let s:nvim_syntax_txt=s:datapath."/nvim_syntax.txt"
+let s:predefs_txt=s:datapath."/predefs.txt"
 " this will be the file that will determine the root of your project
 " Set this to a file that will always be in the root of your projects
 let s:anchors=get(g:, "extra_constants_anchor_files", ["CMakeLists.txt", "Makefile"])
@@ -70,6 +72,14 @@ function! extra_constants#init()
 
     if (!isdirectory(s:whitelistdir))
         call mkdir(s:whitelistdir, "p")
+    endif
+
+    if (!filereadable(s:nvim_syntax_txt))
+        call extra_constants#scripts#regenerate_nvim_syntax()
+    endif
+
+    if (!filereadable(s:predefs_txt))
+        call extra_constants#scripts#regenerate_predefs()
     endif
 
     let root_dir=extra_constants#utils#find_project_root_dir(s:anchors)
