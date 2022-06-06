@@ -12,23 +12,15 @@ let s:cachedir=stdpath("cache")."/extra-constants"
 " find_constants {{{
 
 function! extra_constants#scripts#find_constants(file, compile_commands)
-    return system([s:scriptpath, "find_constants", a:file, s:cachedir, a:compile_commands])
+    return systemlist([s:scriptpath, "find_constants", a:file, s:cachedir, a:compile_commands])
 endfunction
 
 " }}}
 
 " find_enums {{{
 
-function! extra_constants#scripts#find_enums(file)
-    return system([s:scriptpath, "find_enums", a:file])
-endfunction
-
-" }}}
-
-" find_all_files_from_project {{{
-
-function! extra_constants#scripts#find_all_files_from_project(dir = s:project_root)
-    return system([s:scriptpath, "find_all_files_from_project", a:dir])
+function! extra_constants#scripts#find_enums(file, compile_commands)
+    return systemlist([s:scriptpath, "find_enums", a:file, a:compile_commands])
 endfunction
 
 " }}}
