@@ -22,7 +22,7 @@ function find_constants () {
 
     ${CPP} ${INCLUDE_PATH} -dD -E -x c ${FILE} 2>/dev/null | ${GREP} "#define" | cut -d' ' -f2 | ${GREP} -v -E -e "\w+\(.*\)$" > ${TMPFILE}
 
-    ${GREP} ${TMPFILE} -v -f "${CACHE_DIR}/predefs.txt" | ${GREP} -v -f "${CACHE_DIR}/nvim_syntax.txt" | ${GREP} -v -E -e "(^_.*|_H(_INCLUDED)?$)"
+    ${GREP} ${TMPFILE} -v -f "${CACHE_DIR}/predefs.txt" | ${GREP} -v -f "${CACHE_DIR}/nvim_syntax.txt" | ${GREP} -v -E -e "(^_.*|_H(_INCLUDED)?$|^gl*)"
 
     rm ${TMPFILE}
 
